@@ -41,7 +41,7 @@ campsiteRouter.route('/')
     }); //finally, a really clear example of why semicolons are super important! 
 
 campsiteRouter.route('/:campsiteId')
-    .get((req, res) => {
+    .get((req, res, next) => {
         Campsite.findById(req.params.campsiteId)
             .then(campsite => {
                 res.statusCode = 200;
@@ -65,8 +65,14 @@ campsiteRouter.route('/:campsiteId')
             })
             .catch(err => next(err));
     })
-    .delete((req, res) => {
-        res.end(`Deleting campsite: ${req.params.campsiteId}`);
+    .delete((req, res, next) => {
+        Campsite.findByIdAndDelete(req.params.campsiteId)
+            .then(response => {
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
+                res.json(response);
+            })
+            .catch(err => next(err));
     });
 
 campsiteRouter.route('/:campsiteId/comments')
@@ -209,7 +215,5 @@ campsiteRouter.route('/:campsiteId/comments/:commentId')
             })
             .catch(err => next(err));
     });
-
-module.exports = campsiteRouter;
 
 module.exports = campsiteRouter;
