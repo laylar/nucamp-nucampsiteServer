@@ -52,32 +52,19 @@ app.use(session({
   //harddrive instead of just the running application's memory
 }));
 
+app.use('/', indexRouter);
+app.use('/users', usersRouter); //users should be able to access this before auth so they can create a new account
+
 function auth(req, res, next) {
   console.log(req.session);
 
   if (!req.session.user) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader) {
-      const err = new Error('You are not authenticated!');
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
-      return next(err);
-    }
-
-    const auth = Buffer.from(authHeader.split(' ')[1], 'base64').toString().split(':');
-    const user = auth[0];
-    const pass = auth[1];
-    if (user === 'admin' && pass === 'password') {
-      req.session.user = 'admin';
-      return next(); // authorized
-    } else {
-      const err = new Error('You are not authenticated!');
-      res.setHeader('WWW-Authenticate', 'Basic');
-      err.status = 401;
-      return next(err);
-    }
+    const err = new Error('You are not authenticated!');
+    //res.setHeader('WWW-Authenticate', 'Basic'); //handled in the users router now.
+    err.status = 401;
+    return next(err);
   } else {
-    if (req.session.user === 'admin') {
+    if (req.session.user === 'authenticated') {
       console.log('req.session:', req.session);
       return next();
     } else {
@@ -92,8 +79,6 @@ app.use(auth);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
 app.use('/campsites', campsiteRouter);
 app.use('/partners', partnerRouter);
 app.use('/promotions', promotionRouter);
