@@ -5,6 +5,8 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const session = require('express-session');
 const FileStore = require('session-file-store')(session);
+const passport = require('passport');
+const authenticate = require('./authenticate');
 
 
 var indexRouter = require('./routes/index');
@@ -52,28 +54,26 @@ app.use(session({
   //harddrive instead of just the running application's memory
 }));
 
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use('/', indexRouter);
 app.use('/users', usersRouter); //users should be able to access this before auth so they can create a new account
 
-function auth(req, res, next) {
-  console.log(req.session);
 
-  if (!req.session.user) {
+
+function auth(req, res, next) {
+  console.log(req.user);
+
+  if (!req.user) {
     const err = new Error('You are not authenticated!');
-    //res.setHeader('WWW-Authenticate', 'Basic'); //handled in the users router now.
     err.status = 401;
     return next(err);
   } else {
-    if (req.session.user === 'authenticated') {
-      console.log('req.session:', req.session);
-      return next();
-    } else {
-      const err = new Error('You are not authenticated!');
-      err.status = 401;
-      return next(err);
-    }
+    return next();
   }
 }
+
 
 app.use(auth);
 
