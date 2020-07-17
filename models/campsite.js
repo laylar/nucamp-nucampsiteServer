@@ -5,6 +5,10 @@ require('mongoose-currency').loadType(mongoose);
 const Currency = mongoose.Types.Currency; (mongoose);
 
 const commentSchema = new Schema({
+    author: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
     rating: {
         type: Number,
         min: 1,
@@ -21,7 +25,7 @@ const commentSchema = new Schema({
     },
     date: {
         type: Date,
-        required: true
+        required: false
     }
 }, {
     timestamps: true
