@@ -171,19 +171,26 @@ campsiteRouter.route('/:campsiteId/comments/:commentId').get((req, res, next) =>
         Campsite.findById(req.params.campsiteId)
             .then(campsite => {
                 if (campsite && campsite.comments.id(req.params.commentId)) {
-                    if (req.body.rating) {
-                        campsite.comments.id(req.params.commentId).rating = req.body.rating;
+                    //.equals(req.user._id) might be necessary... we'll see.
+                    if (campsite.comments.id(req.params.commentId).author._id.equals(req.user._id)) {
+                        if (req.body.rating) {
+                            campsite.comments.id(req.params.commentId).rating = req.body.rating;
+                        }
+                        if (req.body.text) {
+                            campsite.comments.id(req.params.commentId).text = req.body.text;
+                        }
+                        campsite.save()
+                            .then(campsite => {
+                                res.statusCode = 200;
+                                res.setHeader('Content-Type', 'application/json');
+                                res.json(campsite);
+                            })
+                            .catch(err => next(err));
+                    } else {
+                        err = new Error(`You are not authorized to edit someone else's comment!`);
+                        err.status = 403;
+                        return next(err);
                     }
-                    if (req.body.text) {
-                        campsite.comments.id(req.params.commentId).text = req.body.text;
-                    }
-                    campsite.save()
-                        .then(campsite => {
-                            res.statusCode = 200;
-                            res.setHeader('Content-Type', 'application/json');
-                            res.json(campsite);
-                        })
-                        .catch(err => next(err));
                 } else if (!campsite) {
                     err = new Error(`Campsite ${req.params.campsiteId} not found`);
                     err.status = 404;
@@ -193,6 +200,8 @@ campsiteRouter.route('/:campsiteId/comments/:commentId').get((req, res, next) =>
                     err.status = 404;
                     return next(err);
                 }
+
+
             })
             .catch(err => next(err));
     })
@@ -200,14 +209,20 @@ campsiteRouter.route('/:campsiteId/comments/:commentId').get((req, res, next) =>
         Campsite.findById(req.params.campsiteId)
             .then(campsite => {
                 if (campsite && campsite.comments.id(req.params.commentId)) {
-                    campsite.comments.id(req.params.commentId).remove();
-                    campsite.save()
-                        .then(campsite => {
-                            res.statusCode = 200;
-                            res.setHeader('Content-Type', 'application/json');
-                            res.json(campsite);
-                        })
-                        .catch(err => next(err));
+                    if (campsite.comments.id(req.params.commentId).author._id.equals(req.user._id)) {
+                        campsite.comments.id(req.params.commentId).remove();
+                        campsite.save()
+                            .then(campsite => {
+                                res.statusCode = 200;
+                                res.setHeader('Content-Type', 'application/json');
+                                res.json(campsite);
+                            })
+                            .catch(err => next(err));
+                    } else {
+                        err = new Error(`Your user id is ${req.user._id} but the comment was written by ${campsite.comments.id(req.params.commentId).author._id}. You are not authorized to delete someone else's comment!`);
+                        err.status = 403;
+                        return next(err);
+                    }
                 } else if (!campsite) {
                     err = new Error(`Campsite ${req.params.campsiteId} not found`);
                     err.status = 404;
