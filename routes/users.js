@@ -6,8 +6,14 @@ const authenticate = require('../authenticate');
 const router = express.Router();
 
 /* GET users listing. */
-router.get('/', function (req, res, next) {
-  res.send('respond with a resource');
+router.get('/', authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
+  User.find()
+    .then(users => {
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.json(users);
+    })
+    .catch(err => next(err))
 });
 
 router.post('/signup', (req, res) => {
@@ -49,6 +55,7 @@ router.post('/login', passport.authenticate('local'), (req, res) => {
   res.json({ success: true, token: token, status: 'You are successfully logged in!' });
 });
 
+//is this clearing the token/session...?
 router.get('/logout', (req, res, next) => {
   if (req.session) {
     req.session.destroy();
