@@ -52,11 +52,11 @@ favoriteRouter
           /** User's list of favorites doesn't exist yet! */
           Favorite.create({ user: req.user._id })
             .then((favorites) => {
-              for (let i = 0; i < req.body.length; i++) {
-                if (!favorites.campsites.includes(req.body[i]._id)) {
-                  favorites.campsites.push(req.body[i]);
+              req.body.forEach((faves) => {
+                if (!favorites.campsites.includes(faves._id)) {
+                  favorites.campsites.push(faves._id);
                 }
-              }
+              });
               favorites
                 .save()
                 .then((favorites) => {
